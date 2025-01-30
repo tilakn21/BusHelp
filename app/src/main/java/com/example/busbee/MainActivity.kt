@@ -3,45 +3,55 @@ package com.example.busbee
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.busbee.ui.theme.BusbeeTheme
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.busbee.ui.screens.WelcomeScreen
+import com.example.busbee.ui.screens.LoginScreen
+import com.example.busbee.ui.screens.SignUpScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
-            BusbeeTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+            val navController = rememberNavController()
+
+            NavHost(navController = navController, startDestination = "welcome") {
+                composable("welcome") {
+                    WelcomeScreen(
+                        onLoginClick = {
+                            navController.navigate("login")
+                        },
+                            onSignUpClick = { navController.navigate("signup")
+                        }
                     )
                 }
+                composable("login") {
+                    LoginScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onLoginClick = {
+                            // Handle login logic
+                        },
+                        onSignUpClick = {
+                            navController.navigate("signup") // If you have a signup screen
+                        },
+                        onForgotPasswordClick = {
+                            // Navigate to forgot password screen or show dialog
+                        }
+                    )
+                }
+
+                composable("signup") {
+                    SignUpScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onSignUpClick = { name, email, password ->
+                            // Handle sign-up logic here
+                        },
+                        onLoginClick = { navController.navigate("login") }
+                    )
+                }
+
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    BusbeeTheme {
-        Greeting("Android")
     }
 }
