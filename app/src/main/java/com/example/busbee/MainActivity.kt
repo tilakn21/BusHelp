@@ -9,11 +9,19 @@ import androidx.navigation.compose.rememberNavController
 import com.example.busbee.ui.screens.WelcomeScreen
 import com.example.busbee.ui.screens.LoginScreen
 import com.example.busbee.ui.screens.SignUpScreen
+import com.google.firebase.auth.FirebaseAuth
+
+
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            fun isUserLoggedIn(): Boolean {
+                return FirebaseAuth.getInstance().currentUser != null
+            }
+            val auth = FirebaseAuth.getInstance()
             val navController = rememberNavController()
 
             NavHost(navController = navController, startDestination = "welcome") {

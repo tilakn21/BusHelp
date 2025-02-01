@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "772298359589",
+    "project_id": "busbee-d3600",
+    "storage_bucket": "busbee-d3600.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:772298359589:android:f294ff3261fc60ef1c10cc",
+        "android_client_info": {
+          "package_name": "com.example.busbee"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXRbZ9eZ4ymSsCiD6dxkZb95hltIAF3B0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

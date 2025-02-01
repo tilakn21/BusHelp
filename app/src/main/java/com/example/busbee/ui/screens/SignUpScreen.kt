@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -20,6 +19,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.busbee.dialog.SuccessDialog
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,153 +33,169 @@ fun SignUpScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var signUpSuccessDialogVisible by remember { mutableStateOf(false) }
 
-    fun onSignUpClick(name: String, email: String, password: String) {
-        // Log the name, email, and password when the Sign Up button is clicked
-        Log.d("SignUp", "Name: $name, Email: $email, Password: $password")
-    }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF6A11CB), Color(0xFF2575FC))
-                )
-            )
-            .padding(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Back Button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onBackClick) {
-                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+    fun handleSignUp(name: String, email: String, password: String) {
+        if (name.isBlank() || email.isBlank() || password.isBlank()) {
+            errorMessage = "Please fill all fields"
+            return
+        }
+
+        if (password.length < 6) {
+            errorMessage = "Password must be at least 6 characters long"
+            return
+        }
+
+        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d("SignUp", "Success: User registered!")
+                    signUpSuccessDialogVisible = true
+                    errorMessage = "" // Clear any previous error messages
+                } else {
+                    Log.d("SignUp", "Failure: ${task.exception?.message}")
+                    errorMessage = task.exception?.message ?: "Registration failed. Please try again."
                 }
             }
+    }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Title
-            Text(
-                text = "Create Account",
-                fontSize = 28.sp,
-                color = Color.White,
-                style = MaterialTheme.typography.headlineLarge
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Name Input
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Full Name") },
-                leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Name") },
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.fillMaxWidth(),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.LightGray
-                )
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Email Input
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Email") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.fillMaxWidth(),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.LightGray
-                )
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Password Input
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Password") },
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
-                        )
-                    }
-                },
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.fillMaxWidth(),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.LightGray
-                )
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Sign Up Button
-            Button(
-                onClick = {
-                    if (name.isNotBlank() && email.isNotBlank() && password.isNotBlank()) {
-                        // Set loading state
-                        isLoading = true
-
-                        // Call onSignUpClick to perform sign up logic (e.g. API call)
-                        onSignUpClick(name, email, password)
-                    } else {
-                        // Handle error state
-                        errorMessage = "Please fill all fields"
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Text(text = "Sign Up", color = Color(0xFF6A11CB), fontSize = 18.sp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF121212)), // Dark background
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Back Button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
+            IconButton(onClick = onBackClick) {
+                Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
             }
+        }
 
-            // Show loading indicator while processing
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
-            }
+        Spacer(modifier = Modifier.height(16.dp))
 
-            // Error message display
-            if (errorMessage.isNotBlank()) {
-                Text(
-                    text = errorMessage,
-                    color = Color.Red,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
+        // Title
+        Text(
+            text = "Create Account",
+            fontSize = 28.sp,
+            color = Color.White,
+            style = MaterialTheme.typography.headlineLarge
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-            // Already have an account? Log in
-            Text(
-                text = "Already have an account? Log in",
-                color = Color.White,
-                modifier = Modifier.clickable { onLoginClick() }
+        // Name Input
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Full Name") },
+            leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Name") },
+            modifier = Modifier.fillMaxWidth(0.8f),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = Color.LightGray
+            ),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Email Input
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Email") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            modifier = Modifier.fillMaxWidth(0.8f),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = Color.LightGray
+            ),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Password Input
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Password") },
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                    )
+                }
+            },
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth(0.8f),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = Color.LightGray
+            ),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Sign Up Button
+        Button(
+            onClick = {
+                handleSignUp(name, email, password)
+            },
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+        ) {
+            Text(text = "Sign Up", color = Color(0xFF6A11CB), fontSize = 18.sp)
+        }
+        if (signUpSuccessDialogVisible) {
+            SuccessDialog(
+                title = "Success",
+                message = "You have registered successfully!",
+                onDismiss = { signUpSuccessDialogVisible = false }
             )
         }
+
+        // Error message display
+        if (errorMessage.isNotBlank()) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Already have an account? Log in
+        Text(
+            text = "Already have an account? Log in",
+            color = Color.White,
+            modifier = Modifier.clickable { onLoginClick() }
+        )
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun SignUpScreenPreview() {
+    SignUpScreen(
+        onBackClick = {},
+        onSignUpClick = { _, _, _ -> },
+        onLoginClick = {}
+    )
+}
