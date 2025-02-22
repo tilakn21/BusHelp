@@ -1,20 +1,21 @@
 package com.example.busbee.ui.screens
 
+import android.app.Activity
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -25,8 +26,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.busbee.dialog.SuccessDialog
 import com.google.firebase.auth.FirebaseAuth
-
-
+import com.example.busbee.GoogleSignInHelper.GoogleSignInHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,12 +36,38 @@ fun LoginScreen(
     onSignUpClick: () -> Unit,
     onForgotPasswordClick: () -> Unit
 ) {
+    val auth = FirebaseAuth.getInstance()
+    val googleSignInHelper = GoogleSignInHelper(LocalContext.current)
+    val activity = LocalContext.current as Activity
+
     var email by remember { mutableStateOf(TextFieldValue()) }
     var password by remember { mutableStateOf(TextFieldValue()) }
     var passwordVisible by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf("") }
-    var loginError by remember { mutableStateOf("") } // State for login error messages
+    var loginError by remember { mutableStateOf("") }
     var loginSuccessDialogVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) } // Loading state
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            googleSignInHelper.handleSignInResult(result.data,
+                onSuccess = {
+                    loginSuccessDialogVisible = true
+                    Log.d("GoogleSignIn", it)
+                    onLoginClick()
+                },
+                onFailure = {
+                    loginError = it
+                    Log.d("GoogleSignIn", it)
+                }
+            )
+        } else {
+            loginError = "Google Sign-In was cancelled."
+        }
+    }
+
 
     // Regex for validating email format
     val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$".toRegex()
@@ -51,6 +77,13 @@ fun LoginScreen(
         return email.matches(emailRegex)
     }
 
+    // Handle email change with validation
+    fun onEmailChange(newEmail: TextFieldValue) {
+        email = newEmail
+        emailError = if (isValidEmail(newEmail.text)) "" else "Please enter a valid email address"
+        loginError = "" // Clear login errors when user edits email
+    }
+
     // Login button click action
     fun onLogin(email: String, password: String) {
         if (email.isEmpty() || password.isEmpty()) {
@@ -58,8 +91,12 @@ fun LoginScreen(
             return
         }
 
+        isLoading = true // Start loading
+
         FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
+                isLoading = false // Stop loading
+
                 if (task.isSuccessful) {
                     Log.d("Login", "Success: Logged in!")
                     loginSuccessDialogVisible = true
@@ -70,13 +107,6 @@ fun LoginScreen(
                     loginError = task.exception?.message ?: "Login failed. Please try again."
                 }
             }
-    }
-
-    // Handle email change with validation
-    fun onEmailChange(newEmail: TextFieldValue) {
-        email = newEmail
-        emailError = if (isValidEmail(newEmail.text)) "" else "Please enter a valid email address"
-        loginError = "" // Clear any previous login error when email changes
     }
 
     Column(
@@ -102,14 +132,9 @@ fun LoginScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth(0.8f),
             isError = emailError.isNotEmpty(),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color.White,
-                unfocusedBorderColor = Color.LightGray
-            ),
             singleLine = true
         )
 
-        // Display error message if email is invalid
         if (emailError.isNotEmpty()) {
             Text(
                 text = emailError,
@@ -137,30 +162,32 @@ fun LoginScreen(
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(0.8f),
-            singleLine = true,
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color.White,
-                unfocusedBorderColor = Color.LightGray
-            )
+            singleLine = true
         )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        TextButton(onClick = onForgotPasswordClick) {
-            Text("Forgot Password?", color = Color.White)
-        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Button(
-            onClick = { onLogin(email.text, password.text) }, // Trigger the login function with validation and log
-            modifier = Modifier
-                .fillMaxWidth(0.7f)
-                .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
-        ) {
-            Text(text = "Login", fontSize = 18.sp)
+        if (isLoading) {
+            CircularProgressIndicator(color = Color.White) // Show loading indicator
+        } else {
+            Button(
+                onClick = { onLogin(email.text, password.text) },
+                modifier = Modifier.fillMaxWidth(0.7f).height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(text = "Login", fontSize = 18.sp)
+            }
         }
+
+        if (loginError.isNotEmpty()) {
+            Text(
+                text = loginError,
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+            )
+        }
+
         if (loginSuccessDialogVisible) {
             SuccessDialog(
                 title = "Success",
@@ -168,18 +195,16 @@ fun LoginScreen(
                 onDismiss = { loginSuccessDialogVisible = false }
             )
         }
-
-        // Display login error message if any
-        if (loginError.isNotEmpty()) {
-            Text(
-                text = loginError,
-                color = Color.Red,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(start = 16.dp, top=8.dp)
-            )
+        Spacer(modifier = Modifier.height(20.dp))
+        Button(onClick = { googleSignInLauncher.launch(googleSignInHelper.getGoogleSignInIntent()) }) {
+            Text(text = "Sign in with Google")
         }
 
+
+
         Spacer(modifier = Modifier.height(20.dp))
+
+
 
         TextButton(onClick = onSignUpClick) {
             Text("Don't have an account? Sign Up", color = Color.White)

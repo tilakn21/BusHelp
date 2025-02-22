@@ -12,7 +12,20 @@
           "package_name": "com.example.busbee"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "772298359589-squv0er27olnjo8gk521ca1r44hehutj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.busbee",
+            "certificate_hash": "fa8ec6b19ec7c3cabb18651969fa2c162e66522f"
+          }
+        },
+        {
+          "client_id": "772298359589-0r43ln25v210c7q37aluf6ph37lrdjiu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCXRbZ9eZ4ymSsCiD6dxkZb95hltIAF3B0"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "772298359589-0r43ln25v210c7q37aluf6ph37lrdjiu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
