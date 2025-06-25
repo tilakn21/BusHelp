@@ -50,6 +50,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.play.services.maps)
+    implementation(libs.firebase.firestore.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -62,4 +64,13 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
     implementation(libs.play.services.auth) // Google Sign-In
+
+    implementation(libs.maps.compose) // Jetpack Compose Maps
+    implementation(libs.play.services.maps.v1820) // Google Maps SDK
+    implementation(libs.maps.compose.utils) // Utilities for Maps
+
+    implementation(libs.firebase.firestore.ktx.v24151)
+    implementation(libs.play.services.location)
+    implementation(libs.play.services.base)
+
 }

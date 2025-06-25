@@ -12,28 +12,44 @@ class GoogleSignInHelper(private val context: Context) {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    fun getGoogleSignInIntent(): Intent {
-        val googleSignInClient = GoogleSignIn.getClient(
-            context,
+    private val googleSignInClient: GoogleSignInClient by lazy {
+        GoogleSignIn.getClient(
+            context.applicationContext, // Use applicationContext to avoid memory leaks
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken("772298359589-squv0er27olnjo8gk521ca1r44hehutj.apps.googleusercontent.com")
+                .requestIdToken("772298359589-0r43ln25v210c7q37aluf6ph37lrdjiu.apps.googleusercontent.com")
                 .requestEmail()
                 .build()
         )
+    }
+
+
+    fun getGoogleSignInIntent(): Intent {
         return googleSignInClient.signInIntent
     }
+
 
     fun handleSignInResult(data: Intent?, onSuccess: (String) -> Unit, onFailure: (String) -> Unit) {
         val task = GoogleSignIn.getSignedInAccountFromIntent(data)
         try {
-            val account = task.getResult(ApiException::class.java)!!
+            val account = task.getResult(ApiException::class.java)
+            if (account?.idToken != null) {
+                firebaseAuthWithGoogle(account.idToken!!, onSuccess, onFailure)
+            } else {
+                onFailure("Google Sign-In failed: ID Token is null.")
+            }
             Log.d("GoogleSignIn", "Google Account: ${account.email}")
-            firebaseAuthWithGoogle(account.idToken!!, onSuccess, onFailure)
+
         } catch (e: ApiException) {
             Log.e("GoogleSignIn", "Google Sign-In failed with code: ${e.statusCode}")
-            onFailure("Google Sign-In failed: ${e.message}")
+            when (e.statusCode) {
+                GoogleSignInStatusCodes.SIGN_IN_CANCELLED -> onFailure("Sign-in was canceled by the user.")
+                GoogleSignInStatusCodes.SIGN_IN_FAILED -> onFailure("Google Sign-In failed due to an unknown error.")
+                GoogleSignInStatusCodes.NETWORK_ERROR -> onFailure("Network error. Check your internet connection.")
+                else -> onFailure("Google Sign-In failed: ${e.message}")
+            }
         }
     }
+
 
 
     private fun firebaseAuthWithGoogle(idToken: String, onSuccess: (String) -> Unit, onFailure: (String) -> Unit) {
@@ -50,6 +66,7 @@ class GoogleSignInHelper(private val context: Context) {
 
     fun logout() {
         auth.signOut()
-        GoogleSignIn.getClient(context, GoogleSignInOptions.DEFAULT_SIGN_IN).signOut()
+        GoogleSignIn.getClient(context, GoogleSignInOptions.DEFAULT_SIGN_IN).revokeAccess()
     }
+
 }

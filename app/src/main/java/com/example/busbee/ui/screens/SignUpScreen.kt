@@ -2,6 +2,7 @@ package com.example.busbee.ui.screens
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,13 +13,14 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.busbee.dialog.SuccessDialog
 import com.google.firebase.auth.FirebaseAuth
 
@@ -36,13 +38,11 @@ fun SignUpScreen(
     var errorMessage by remember { mutableStateOf("") }
     var signUpSuccessDialogVisible by remember { mutableStateOf(false) }
 
-
     fun handleSignUp(name: String, email: String, password: String) {
         if (name.isBlank() || email.isBlank() || password.isBlank()) {
             errorMessage = "Please fill all fields"
             return
         }
-
         if (password.length < 6) {
             errorMessage = "Password must be at least 6 characters long"
             return
@@ -52,8 +52,8 @@ fun SignUpScreen(
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Log.d("SignUp", "Success: User registered!")
-                    signUpSuccessDialogVisible = true
                     errorMessage = "" // Clear any previous error messages
+                    onSignUpClick(name, email, password) // Navigate to home screen
                 } else {
                     Log.d("SignUp", "Failure: ${task.exception?.message}")
                     errorMessage = task.exception?.message ?: "Registration failed. Please try again."
@@ -61,12 +61,18 @@ fun SignUpScreen(
             }
     }
 
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF121212)), // Dark background
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color(0xFF121212), Color(0xFF2575FC))
+                )
+            )
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
     ) {
         // Back Button
         Row(
@@ -162,11 +168,16 @@ fun SignUpScreen(
         ) {
             Text(text = "Sign Up", color = Color(0xFF6A11CB), fontSize = 18.sp)
         }
+
+        // Success Dialog
         if (signUpSuccessDialogVisible) {
             SuccessDialog(
                 title = "Success",
                 message = "You have registered successfully!",
-                onDismiss = { signUpSuccessDialogVisible = false }
+                onDismiss = {
+                    signUpSuccessDialogVisible = false
+                    onSignUpClick(name, email, password) // Navigate after sign-up
+                }
             )
         }
 
@@ -182,13 +193,18 @@ fun SignUpScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Already have an account? Log in
+
         Text(
             text = "Already have an account? Log in",
             color = Color.White,
-            modifier = Modifier.clickable { onLoginClick() }
+            fontSize = 16.sp,
+            modifier = Modifier
+                .clickable { onLoginClick() }
+                .padding(8.dp)
         )
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable

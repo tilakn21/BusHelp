@@ -37,8 +37,7 @@ fun SuccessDialog(
                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp),
                 color = Color.DarkGray // Adjust color as needed
             )
-        },
-        confirmButton = {
+        },confirmButton = {
             TextButton(
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp), // Rounded corners for button
@@ -49,6 +48,7 @@ fun SuccessDialog(
                 Text("OK")
             }
         },
+
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp)) // Rounded corners for dialog
             .background(Color.White), // Background color of the dialog

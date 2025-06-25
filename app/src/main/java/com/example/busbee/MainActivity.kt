@@ -6,21 +6,22 @@ import androidx.activity.compose.setContent
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.busbee.ui.screens.StudentHomeScreen
-import com.example.busbee.ui.screens.WelcomeScreen
-import com.example.busbee.ui.screens.LoginScreen
-import com.example.busbee.ui.screens.SignUpScreen
+import com.example.busbee.ui.screens.*
+import com.example.busbee.ui.screens.management.BusManagementScreen
+import com.example.busbee.ui.screens.management.BusTrackScreen
+import com.example.busbee.ui.screens.management.ManagementDashboardScreen
 import com.google.firebase.auth.FirebaseAuth
+
+private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             val navController = rememberNavController()
-            val auth = FirebaseAuth.getInstance()
 
             // Check if user is already logged in
-            val startDestination = if (auth.currentUser != null) "home" else "welcome"
+            val startDestination = if (auth.currentUser != null) "management_dashboard" else "welcome"
 
             NavHost(navController = navController, startDestination = startDestination) {
                 composable("welcome") {
@@ -33,21 +34,19 @@ class MainActivity : ComponentActivity() {
                     LoginScreen(
                         onBackClick = { navController.popBackStack() },
                         onLoginClick = {
-                            navController.navigate("home") {
+                            navController.navigate("management_dashboard") {
                                 popUpTo("login") { inclusive = true } // Clear backstack
                             }
                         },
                         onSignUpClick = { navController.navigate("signup") },
-                        onForgotPasswordClick = {
-                            // Handle forgot password logic
-                        }
+                        onForgotPasswordClick = { navController.navigate("forgot_password") }
                     )
                 }
                 composable("signup") {
                     SignUpScreen(
                         onBackClick = { navController.popBackStack() },
                         onSignUpClick = { _, _, _ ->
-                            navController.navigate("home") {
+                            navController.navigate("management_dashboard") {
                                 popUpTo("signup") { inclusive = true }
                             }
                         },
@@ -56,8 +55,43 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("home") {
                     StudentHomeScreen(
-                        onChangePickupClick = { navController.popBackStack() },
-                        onFindAlternativeClick = { navController.popBackStack() }
+                        onChangePickupClick = { navController.navigate("pickup_screen") },
+                        onFindAlternativeClick = { navController.navigate("alternative_bus_screen") },
+                        onLogoutClick = {
+                            auth.signOut()
+                            navController.navigate("welcome") {
+                                popUpTo("home") { inclusive = true } // Clear backstack
+                            }
+                        },
+                        onBoardBusClick = {
+                            // Handle onboard bus logic
+                        }
+                    )
+                }
+                composable("forgot_password") {
+                    ForgotPasswordScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onResetSuccess = { navController.popBackStack("login", false) }
+                    )
+                }
+                composable("management_dashboard") {
+                    ManagementDashboardScreen(
+                        onTrackBusClick = { navController.navigate("track_bus") },
+                        onBusManagementClick = { navController.navigate("bus_management") },
+                        onDriverDetailsClick = { navController.navigate("driver_conductor") },
+                        onRoutePlanningClick = { navController.navigate("route_planning") },
+                        onCameraViewClick = { navController.navigate("camera_view") },
+                        onSpeedAlertsClick = { navController.navigate("speed_alert") }
+                    )
+                }
+                composable("track_bus") {
+                    BusTrackScreen(
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+                composable("bus_management") {
+                    BusManagementScreen(
+                        onBackClick = { navController.popBackStack() },
                     )
                 }
             }
